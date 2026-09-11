@@ -110,6 +110,7 @@ table input.prod-name{font-family:var(--font-body);min-width:120px;}
 .price-cell{display:flex;gap:6px;}
 .price-cell input{min-width:60px;}
 .price-cell select{min-width:64px;flex:0 0 64px;}
+.price-twd-cell{font-family:var(--font-mono);color:var(--ink-soft);white-space:nowrap;}
 .btn-secondary:hover{opacity:.9;}
 .btn-primary{background:var(--role-stimulus);color:#fff;border:none;border-radius:8px;padding:12px 22px;font-family:var(--font-heading);font-weight:700;font-size:.92rem;cursor:pointer;}
 .btn-primary:hover{opacity:.9;}
@@ -306,14 +307,14 @@ footer .disclaimer a{color:#7FD1B9;}
         <input type="file" id="productFileInput" accept=".csv,.xlsx,.xls" style="display:none;">
       </span>
     </div>
-    <p class="section-lead">「建議售價」以美金／日幣輸入（選填），只用於跟上架總金額上限比對；「商品成本」為選填的台幣進貨成本；皆未填不影響毛利／淨利計算。上傳 CSV／Excel 會依欄位標題自動對應並<strong>取代</strong>目前的商品清單（分類名稱會自動比對或新增）；下載會輸出目前畫面上的商品清單，方便離線編輯後再匯入。</p>
+    <p class="section-lead">「建議售價」以美金／日幣輸入（選填），只用於跟上架總金額上限比對，未填不影響毛利／淨利計算；「建議售價(NT$)」是依全域設定的匯率自動換算出來的台幣參考值，唯讀不可編輯。上傳 CSV／Excel 會依欄位標題自動對應並<strong>取代</strong>目前的商品清單（分類名稱會自動比對或新增）；下載會輸出目前畫面上的商品清單，方便離線編輯後再匯入。</p>
     <div class="table-scroll">
       <table class="prod-table" id="productTable">
         <thead><tr>
           <th style="min-width:140px;">品名（選填）</th>
           <th style="min-width:120px;">分類</th>
           <th style="min-width:140px;">建議售價</th>
-          <th style="min-width:100px;">商品成本（NT$）</th>
+          <th style="min-width:110px;">建議售價(NT$)</th>
           <th style="min-width:90px;">庫存數量</th>
           <th style="min-width:90px;">週銷量</th>
           <th style="min-width:90px;">月銷量</th>
@@ -448,12 +449,12 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
         usdToTwd:31.5, jpyToTwd:0.21,
         categories:[{id:"cat1",name:"居家小家電",feePct:15},{id:"cat2",name:"廚房用品",feePct:15}],
         products:[
-          {id:"p1",name:"電動打蛋器",categoryId:"cat1",price:24.99,priceCurrency:"USD",cost:295,stock:80,weeklySales:15,monthlySales:60,weeklyProfit:4500,monthlyProfit:18000},
-          {id:"p2",name:"摺疊烘衣架",categoryId:"cat1",price:34.99,priceCurrency:"USD",cost:610,stock:50,weeklySales:8,monthlySales:32,weeklyProfit:2400,monthlyProfit:9600},
-          {id:"p3",name:"不鏽鋼保溫杯",categoryId:"cat2",price:18.99,priceCurrency:"USD",cost:165,stock:120,weeklySales:25,monthlySales:100,weeklyProfit:6250,monthlyProfit:25000},
-          {id:"p4",name:"矽膠料理夾組",categoryId:"cat2",price:12.99,priceCurrency:"USD",cost:225,stock:90,weeklySales:12,monthlySales:48,weeklyProfit:1800,monthlyProfit:7200},
-          {id:"p5",name:"電子秤",categoryId:"cat1",price:15.99,priceCurrency:"USD",cost:340,stock:60,weeklySales:10,monthlySales:40,weeklyProfit:2000,monthlyProfit:8000},
-          {id:"p6",name:"多功能砧板",categoryId:"cat2",price:16.99,priceCurrency:"USD",cost:140,stock:70,weeklySales:9,monthlySales:36,weeklyProfit:1350,monthlyProfit:5400}
+          {id:"p1",name:"電動打蛋器",categoryId:"cat1",price:24.99,priceCurrency:"USD",stock:80,weeklySales:15,monthlySales:60,weeklyProfit:4500,monthlyProfit:18000},
+          {id:"p2",name:"摺疊烘衣架",categoryId:"cat1",price:34.99,priceCurrency:"USD",stock:50,weeklySales:8,monthlySales:32,weeklyProfit:2400,monthlyProfit:9600},
+          {id:"p3",name:"不鏽鋼保溫杯",categoryId:"cat2",price:18.99,priceCurrency:"USD",stock:120,weeklySales:25,monthlySales:100,weeklyProfit:6250,monthlyProfit:25000},
+          {id:"p4",name:"矽膠料理夾組",categoryId:"cat2",price:12.99,priceCurrency:"USD",stock:90,weeklySales:12,monthlySales:48,weeklyProfit:1800,monthlyProfit:7200},
+          {id:"p5",name:"電子秤",categoryId:"cat1",price:15.99,priceCurrency:"USD",stock:60,weeklySales:10,monthlySales:40,weeklyProfit:2000,monthlyProfit:8000},
+          {id:"p6",name:"多功能砧板",categoryId:"cat2",price:16.99,priceCurrency:"USD",stock:70,weeklySales:9,monthlySales:36,weeklyProfit:1350,monthlyProfit:5400}
         ]
       }},
     {id:"electronics", emoji:"🔌", label:"3C配件組合", blurb:"快充頭庫存見底，示範緊急／注意兩級補貨警示（USD計價）。",
@@ -462,11 +463,11 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
         usdToTwd:31.5, jpyToTwd:0.21,
         categories:[{id:"cat1",name:"3C配件",feePct:15},{id:"cat2",name:"穿戴裝置配件",feePct:17}],
         products:[
-          {id:"p1",name:"USB-C快充頭",categoryId:"cat1",price:12.99,priceCurrency:"USD",cost:95,stock:15,weeklySales:20,monthlySales:85,weeklyProfit:3000,monthlyProfit:12750},
-          {id:"p2",name:"藍牙耳機保護殼",categoryId:"cat1",price:9.99,priceCurrency:"USD",cost:180,stock:40,weeklySales:10,monthlySales:42,weeklyProfit:1600,monthlyProfit:6720},
-          {id:"p3",name:"手機支架",categoryId:"cat1",price:11.99,priceCurrency:"USD",cost:85,stock:100,weeklySales:14,monthlySales:58,weeklyProfit:2100,monthlyProfit:8700},
-          {id:"p4",name:"運動手錶錶帶",categoryId:"cat2",price:14.99,priceCurrency:"USD",cost:310,stock:18,weeklySales:9,monthlySales:38,weeklyProfit:1350,monthlyProfit:5700},
-          {id:"p5",name:"智慧手環充電線",categoryId:"cat2",price:7.99,priceCurrency:"USD",cost:60,stock:60,weeklySales:6,monthlySales:25,weeklyProfit:900,monthlyProfit:3750}
+          {id:"p1",name:"USB-C快充頭",categoryId:"cat1",price:12.99,priceCurrency:"USD",stock:15,weeklySales:20,monthlySales:85,weeklyProfit:3000,monthlyProfit:12750},
+          {id:"p2",name:"藍牙耳機保護殼",categoryId:"cat1",price:9.99,priceCurrency:"USD",stock:40,weeklySales:10,monthlySales:42,weeklyProfit:1600,monthlyProfit:6720},
+          {id:"p3",name:"手機支架",categoryId:"cat1",price:11.99,priceCurrency:"USD",stock:100,weeklySales:14,monthlySales:58,weeklyProfit:2100,monthlyProfit:8700},
+          {id:"p4",name:"運動手錶錶帶",categoryId:"cat2",price:14.99,priceCurrency:"USD",stock:18,weeklySales:9,monthlySales:38,weeklyProfit:1350,monthlyProfit:5700},
+          {id:"p5",name:"智慧手環充電線",categoryId:"cat2",price:7.99,priceCurrency:"USD",stock:60,weeklySales:6,monthlySales:25,weeklyProfit:900,monthlyProfit:3750}
         ]
       }},
     {id:"camping", emoji:"⛺", label:"戶外露營用品組合", blurb:"USD計價，示範上架總金額超過自訂上限。",
@@ -475,11 +476,11 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
         usdToTwd:31.5, jpyToTwd:0.21,
         categories:[{id:"cat1",name:"露營裝備",feePct:15},{id:"cat2",name:"戶外服飾",feePct:17}],
         products:[
-          {id:"p1",name:"四人帳篷",categoryId:"cat1",price:89.99,priceCurrency:"USD",cost:1680,stock:30,weeklySales:4,monthlySales:17,weeklyProfit:3200,monthlyProfit:13600},
-          {id:"p2",name:"露營爐具組",categoryId:"cat1",price:39.99,priceCurrency:"USD",cost:520,stock:45,weeklySales:6,monthlySales:25,weeklyProfit:2100,monthlyProfit:8750},
-          {id:"p3",name:"睡袋",categoryId:"cat1",price:34.99,priceCurrency:"USD",cost:750,stock:60,weeklySales:8,monthlySales:34,weeklyProfit:1920,monthlyProfit:8160},
-          {id:"p4",name:"防水外套",categoryId:"cat2",price:59.99,priceCurrency:"USD",cost:690,stock:80,weeklySales:10,monthlySales:42,weeklyProfit:2500,monthlyProfit:10500},
-          {id:"p5",name:"登山鞋",categoryId:"cat2",price:69.99,priceCurrency:"USD",cost:1420,stock:50,weeklySales:7,monthlySales:29,weeklyProfit:2450,monthlyProfit:10150}
+          {id:"p1",name:"四人帳篷",categoryId:"cat1",price:89.99,priceCurrency:"USD",stock:30,weeklySales:4,monthlySales:17,weeklyProfit:3200,monthlyProfit:13600},
+          {id:"p2",name:"露營爐具組",categoryId:"cat1",price:39.99,priceCurrency:"USD",stock:45,weeklySales:6,monthlySales:25,weeklyProfit:2100,monthlyProfit:8750},
+          {id:"p3",name:"睡袋",categoryId:"cat1",price:34.99,priceCurrency:"USD",stock:60,weeklySales:8,monthlySales:34,weeklyProfit:1920,monthlyProfit:8160},
+          {id:"p4",name:"防水外套",categoryId:"cat2",price:59.99,priceCurrency:"USD",stock:80,weeklySales:10,monthlySales:42,weeklyProfit:2500,monthlyProfit:10500},
+          {id:"p5",name:"登山鞋",categoryId:"cat2",price:69.99,priceCurrency:"USD",stock:50,weeklySales:7,monthlySales:29,weeklyProfit:2450,monthlyProfit:10150}
         ]
       }},
     {id:"beauty", emoji:"💄", label:"美妝保養組合", blurb:"JPY計價，固定支出偏高，示範未達獲利門檻（虧損）。",
@@ -488,11 +489,11 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
         usdToTwd:31.5, jpyToTwd:0.21,
         categories:[{id:"cat1",name:"美妝保養",feePct:15},{id:"cat2",name:"香氛保養",feePct:15}],
         products:[
-          {id:"p1",name:"保濕面膜組",categoryId:"cat1",price:1480,priceCurrency:"JPY",cost:85,stock:200,weeklySales:30,monthlySales:125,weeklyProfit:1200,monthlyProfit:5000},
-          {id:"p2",name:"胺基酸洗面乳",categoryId:"cat1",price:1280,priceCurrency:"JPY",cost:150,stock:150,weeklySales:22,monthlySales:92,weeklyProfit:1100,monthlyProfit:4600},
-          {id:"p3",name:"護唇膏",categoryId:"cat1",price:640,priceCurrency:"JPY",cost:35,stock:300,weeklySales:40,monthlySales:168,weeklyProfit:800,monthlyProfit:3360},
-          {id:"p4",name:"香氛蠟燭",categoryId:"cat2",price:1980,priceCurrency:"JPY",cost:260,stock:80,weeklySales:9,monthlySales:38,weeklyProfit:900,monthlyProfit:3800},
-          {id:"p5",name:"身體乳液",categoryId:"cat2",price:1730,priceCurrency:"JPY",cost:95,stock:100,weeklySales:14,monthlySales:59,weeklyProfit:1050,monthlyProfit:4400}
+          {id:"p1",name:"保濕面膜組",categoryId:"cat1",price:1480,priceCurrency:"JPY",stock:200,weeklySales:30,monthlySales:125,weeklyProfit:1200,monthlyProfit:5000},
+          {id:"p2",name:"胺基酸洗面乳",categoryId:"cat1",price:1280,priceCurrency:"JPY",stock:150,weeklySales:22,monthlySales:92,weeklyProfit:1100,monthlyProfit:4600},
+          {id:"p3",name:"護唇膏",categoryId:"cat1",price:640,priceCurrency:"JPY",stock:300,weeklySales:40,monthlySales:168,weeklyProfit:800,monthlyProfit:3360},
+          {id:"p4",name:"香氛蠟燭",categoryId:"cat2",price:1980,priceCurrency:"JPY",stock:80,weeklySales:9,monthlySales:38,weeklyProfit:900,monthlyProfit:3800},
+          {id:"p5",name:"身體乳液",categoryId:"cat2",price:1730,priceCurrency:"JPY",stock:100,weeklySales:14,monthlySales:59,weeklyProfit:1050,monthlyProfit:4400}
         ]
       }},
     {id:"pet", emoji:"🐾", label:"寵物用品組合", blurb:"三分類混合抽成＋USD/JPY混合計價，含一項無銷售紀錄商品。",
@@ -501,12 +502,12 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
         usdToTwd:31.5, jpyToTwd:0.21,
         categories:[{id:"cat1",name:"寵物食品",feePct:15},{id:"cat2",name:"寵物玩具",feePct:15},{id:"cat3",name:"寵物精品",feePct:20}],
         products:[
-          {id:"p1",name:"天然狗糧5kg",categoryId:"cat1",price:34.99,priceCurrency:"USD",cost:680,stock:40,weeklySales:12,monthlySales:50,weeklyProfit:1800,monthlyProfit:7500},
-          {id:"p2",name:"貓砂10L",categoryId:"cat1",price:19.99,priceCurrency:"USD",cost:195,stock:35,weeklySales:10,monthlySales:42,weeklyProfit:1200,monthlyProfit:5040},
-          {id:"p3",name:"益智漏食玩具",categoryId:"cat2",price:2480,priceCurrency:"JPY",cost:340,stock:25,weeklySales:5,monthlySales:21,weeklyProfit:750,monthlyProfit:3150},
-          {id:"p4",name:"寵物羽毛逗貓棒",categoryId:"cat2",price:680,priceCurrency:"JPY",cost:40,stock:50,weeklySales:0,monthlySales:0,weeklyProfit:0,monthlyProfit:0},
-          {id:"p5",name:"客製化寵物項圈",categoryId:"cat3",price:24.99,priceCurrency:"USD",cost:510,stock:6,weeklySales:3,monthlySales:12,weeklyProfit:900,monthlyProfit:3600},
-          {id:"p6",name:"寵物精品貓抓板",categoryId:"cat3",price:3980,priceCurrency:"JPY",cost:260,stock:8,weeklySales:6,monthlySales:24,weeklyProfit:1400,monthlyProfit:5600}
+          {id:"p1",name:"天然狗糧5kg",categoryId:"cat1",price:34.99,priceCurrency:"USD",stock:40,weeklySales:12,monthlySales:50,weeklyProfit:1800,monthlyProfit:7500},
+          {id:"p2",name:"貓砂10L",categoryId:"cat1",price:19.99,priceCurrency:"USD",stock:35,weeklySales:10,monthlySales:42,weeklyProfit:1200,monthlyProfit:5040},
+          {id:"p3",name:"益智漏食玩具",categoryId:"cat2",price:2480,priceCurrency:"JPY",stock:25,weeklySales:5,monthlySales:21,weeklyProfit:750,monthlyProfit:3150},
+          {id:"p4",name:"寵物羽毛逗貓棒",categoryId:"cat2",price:680,priceCurrency:"JPY",stock:50,weeklySales:0,monthlySales:0,weeklyProfit:0,monthlyProfit:0},
+          {id:"p5",name:"客製化寵物項圈",categoryId:"cat3",price:24.99,priceCurrency:"USD",stock:6,weeklySales:3,monthlySales:12,weeklyProfit:900,monthlyProfit:3600},
+          {id:"p6",name:"寵物精品貓抓板",categoryId:"cat3",price:3980,priceCurrency:"JPY",stock:8,weeklySales:6,monthlySales:24,weeklyProfit:1400,monthlyProfit:5600}
         ]
       }}
   ];
@@ -682,7 +683,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
   /* ---------- Product CRUD & render ---------- */
   function addProduct(){
     if(!state.categories.length){ showToast("請先新增至少一個分類。"); return; }
-    state.products.push({id:nextProdId(), name:"", categoryId:state.categories[0].id, price:null, priceCurrency:"USD", cost:null, stock:0, weeklySales:0, monthlySales:0, weeklyProfit:0, monthlyProfit:0});
+    state.products.push({id:nextProdId(), name:"", categoryId:state.categories[0].id, price:null, priceCurrency:"USD", stock:0, weeklySales:0, monthlySales:0, weeklyProfit:0, monthlyProfit:0});
     clearActivePreset();
     renderProducts();
     renderCategories();
@@ -713,7 +714,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
         '<td><select data-field="categoryId">' + categoryOptionsHtml(p.categoryId) + '</select></td>' +
         '<td><div class="price-cell"><input type="number" min="0" step="0.01" data-field="price" value="' + (p.price==null?"":p.price) + '" placeholder="選填">' +
           '<select data-field="priceCurrency"><option value="USD"' + ((p.priceCurrency||"USD")==="USD"?" selected":"") + '>USD</option><option value="JPY"' + (p.priceCurrency==="JPY"?" selected":"") + '>JPY</option></select></div></td>' +
-        '<td><input type="number" min="0" step="1" data-field="cost" value="' + (p.cost==null?"":p.cost) + '" placeholder="選填"></td>' +
+        '<td class="price-twd-cell" data-role="priceTwd">—</td>' +
         '<td><input type="number" min="0" step="1" data-field="stock" value="' + p.stock + '"></td>' +
         '<td><input type="number" min="0" step="1" data-field="weeklySales" value="' + p.weeklySales + '"></td>' +
         '<td><input type="number" min="0" step="1" data-field="monthlySales" value="' + p.monthlySales + '"></td>' +
@@ -737,7 +738,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       if(!p) return;
       var field = e.target.dataset.field;
       if(field === "name"){ p.name = e.target.value; }
-      else if(field === "price" || field === "cost"){ var v = e.target.value.trim(); p[field] = v === "" ? null : (parseFloat(v)||0); }
+      else if(field === "price"){ var v = e.target.value.trim(); p.price = v === "" ? null : (parseFloat(v)||0); }
       else if(field){ p[field] = parseFloat(e.target.value)||0; }
       clearActivePreset();
       persistState();
@@ -817,25 +818,23 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       var priceCurrency = p.priceCurrency === "JPY" ? "JPY" : "USD";
       var priceTWD = (p.price != null && p.price > 0) ? p.price * rateForCurrency(priceCurrency) : null;
       var listingValue = priceTWD != null ? priceTWD * p.stock : null;
-      var costValue = (p.cost != null && p.cost > 0) ? p.cost * p.stock : null;
       return {
         id:p.id, name:p.name && p.name.trim() ? p.name.trim() : "(未命名商品)",
         categoryId:p.categoryId, categoryName: cat ? cat.name : "未分類", feePct:feePct,
-        price:p.price, priceCurrency:priceCurrency, priceTWD:priceTWD, cost:p.cost, costValue:costValue,
+        price:p.price, priceCurrency:priceCurrency, priceTWD:priceTWD,
         stock:p.stock, weeklySales:p.weeklySales, monthlySales:p.monthlySales,
         weeklyProfit:p.weeklyProfit, monthlyProfit:p.monthlyProfit,
         weeklyNet:weeklyNet, monthlyNet:monthlyNet,
         listingValue:listingValue, daysLeft:daysLeft, restockLevel:restockLevel
       };
     });
-    var totals = {weeklyGross:0, monthlyGross:0, weeklyNet:0, monthlyNet:0, listingTotal:0, listingCountedProducts:0, costTotal:0, costCountedProducts:0};
+    var totals = {weeklyGross:0, monthlyGross:0, weeklyNet:0, monthlyNet:0, listingTotal:0, listingCountedProducts:0};
     perProduct.forEach(function(r){
       totals.weeklyGross += r.weeklyProfit;
       totals.monthlyGross += r.monthlyProfit;
       totals.weeklyNet += r.weeklyNet;
       totals.monthlyNet += r.monthlyNet;
       if(r.listingValue != null){ totals.listingTotal += r.listingValue; totals.listingCountedProducts++; }
-      if(r.costValue != null){ totals.costTotal += r.costValue; totals.costCountedProducts++; }
     });
     var catRollup = state.categories.map(function(c){
       var items = perProduct.filter(function(r){ return r.categoryId === c.id; });
@@ -898,11 +897,6 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       capSub = "尚未有商品填寫建議售價";
     }
     card("上架總金額（庫存×售價，已換算台幣）", fmtMoney(calc.totals.listingTotal), capSub, capState);
-
-    var costSub = calc.totals.costCountedProducts > 0
-      ? "（" + calc.totals.costCountedProducts + " 項商品有填成本才計入）"
-      : "尚未有商品填寫商品成本";
-    card("總庫存成本（庫存×成本，台幣）", fmtMoney(calc.totals.costTotal), costSub, "na");
 
     var urgentCount = calc.perProduct.filter(function(r){ return r.restockLevel==="urgent"; }).length;
     var watchCount = calc.perProduct.filter(function(r){ return r.restockLevel==="watch"; }).length;
@@ -995,12 +989,22 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     }
   }
 
+  function syncPriceTwdCells(){
+    document.querySelectorAll('#productTbody tr[data-id]').forEach(function(tr){
+      var p = state.products.filter(function(x){ return x.id === tr.dataset.id; })[0];
+      var cell = tr.querySelector('[data-role="priceTwd"]');
+      if(!p || !cell) return;
+      var twd = (p.price != null && p.price > 0) ? p.price * rateForCurrency(p.priceCurrency || "USD") : null;
+      cell.textContent = twd == null ? "—" : fmtInt(twd);
+    });
+  }
   function recalcAll(){
     var calc = calculate();
     renderKpis(calc);
     renderRestockTable(calc);
     renderCategorySummary(calc);
     renderRoles(calc);
+    syncPriceTwdCells();
     return calc;
   }
 
@@ -1139,7 +1143,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     var wState = balanceState(calc.totals.weeklyNet, state.weeklyThreshold);
     var mState = balanceState(calc.totals.monthlyNet, state.monthlyThreshold);
     lines.push("整體收支：週淨利（抽成後）" + fmtMoney(calc.totals.weeklyNet) + "，週門檻 " + fmtMoney(state.weeklyThreshold) + "（" + (wState==="na"?"未設定":wState==="good"?"達標":wState==="warn"?"打平臨界":"未達標") + "）；月淨利 " + fmtMoney(calc.totals.monthlyNet) + "，月門檻 " + fmtMoney(state.monthlyThreshold) + "（" + (mState==="na"?"未設定":mState==="good"?"達標":mState==="warn"?"打平臨界":"未達標") + "）。");
-    lines.push("匯率設定：USD/TWD=" + state.usdToTwd + "，JPY/TWD=" + state.jpyToTwd + "；商品售價以此換算成台幣後才拿去跟門檻／上限比對。總庫存成本（台幣）約 " + fmtMoney(calc.totals.costTotal) + "。");
+    lines.push("匯率設定：USD/TWD=" + state.usdToTwd + "，JPY/TWD=" + state.jpyToTwd + "；商品售價以此換算成台幣後才拿去跟門檻／上限比對。");
     if(state.capEnabled && state.capAmount > 0){
       lines.push("上架總金額（庫存×售價，已換算台幣）" + fmtMoney(calc.totals.listingTotal) + "，自訂上限 " + fmtMoney(state.capAmount) + "（" + (calc.totals.listingTotal > state.capAmount ? "已超過" : "未超過") + "）。");
     }
@@ -1172,9 +1176,6 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     var watch = calc.perProduct.filter(function(r){ return r.restockLevel==="watch"; });
     if(urgent.length) sentences.push("以下商品庫存即將在補貨前置期內用罄，建議立即安排補貨：" + urgent.map(function(r){ return r.name; }).join("、") + "。");
     if(watch.length) sentences.push("以下商品可撐天數已接近補貨前置期，建議提前規劃：" + watch.map(function(r){ return r.name; }).join("、") + "。");
-
-    var badMarginItems = calc.perProduct.filter(function(r){ return r.priceTWD != null && r.cost != null && r.cost > 0 && r.cost >= r.priceTWD; });
-    if(badMarginItems.length) sentences.push("以下商品的商品成本已經超過或等於建議售價換算台幣後的金額，等於單件商品在成本面已無利潤空間，建議檢視訂價或成本結構：" + badMarginItems.map(function(r){ return r.name; }).join("、") + "。");
 
     var mainItems = calc.perProduct.filter(function(r){ return r.role === "main"; }).sort(function(a,b){ return b.monthlyNet-a.monthlyNet; });
     var stimulusItems = calc.perProduct.filter(function(r){ return r.role === "stimulus"; });
@@ -1254,8 +1255,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       ["每月最低獲利門檻", fmtMoney(state.monthlyThreshold)],
       ["匯率設定", "USD/TWD=" + state.usdToTwd + "　JPY/TWD=" + state.jpyToTwd],
       ["上架總金額（庫存×售價，已換算台幣）", fmtMoney(calc.totals.listingTotal)],
-      ["自訂上架金額上限", state.capEnabled ? fmtMoney(state.capAmount) : "未啟用"],
-      ["總庫存成本（庫存×成本，台幣）", fmtMoney(calc.totals.costTotal)]
+      ["自訂上架金額上限", state.capEnabled ? fmtMoney(state.capAmount) : "未啟用"]
     ];
     var overviewHtml = overviewRows.map(function(r){
       var cls = "";
@@ -1323,7 +1323,6 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     categoryName: ["分類", "類別", "category"],
     price: ["建議售價", "售價", "價格", "price"],
     priceCurrency: ["售價幣別", "幣別", "currency"],
-    cost: ["商品成本", "成本", "cost"],
     stock: ["庫存數量", "庫存", "庫存量", "stock"],
     weeklySales: ["週銷量", "週銷售數量", "周銷量", "周銷售數量", "weeklysales", "weekly sales"],
     monthlySales: ["月銷量", "月銷售數量", "monthlysales", "monthly sales"],
@@ -1400,7 +1399,6 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
         categoryId: categoryId,
         price: toNullableNumber(get("price")),
         priceCurrency: normalizeCurrencyValue(get("priceCurrency")),
-        cost: toNullableNumber(get("cost")),
         stock: toNumber(get("stock"), 0),
         weeklySales: toNumber(get("weeklySales"), 0),
         monthlySales: toNumber(get("monthlySales"), 0),
@@ -1453,14 +1451,14 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     return s;
   }
   function downloadProductsCsv(){
-    var header = ["品名", "分類", "建議售價", "售價幣別", "商品成本", "庫存數量", "週銷量", "月銷量", "週毛利", "月毛利"];
+    var header = ["品名", "分類", "建議售價", "售價幣別", "庫存數量", "週銷量", "月銷量", "週毛利", "月毛利"];
     var catMap = {};
     state.categories.forEach(function(c){ catMap[c.id] = c.name; });
     var lines = [header.map(csvEscape).join(",")];
     state.products.forEach(function(p){
       lines.push([
         p.name || "", catMap[p.categoryId] || "", p.price == null ? "" : p.price, p.priceCurrency || "USD",
-        p.cost == null ? "" : p.cost, p.stock, p.weeklySales, p.monthlySales, p.weeklyProfit, p.monthlyProfit
+        p.stock, p.weeklySales, p.monthlySales, p.weeklyProfit, p.monthlyProfit
       ].map(csvEscape).join(","));
     });
     var csvText = "﻿" + lines.join("\r\n");
@@ -1530,8 +1528,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       ["每月最低獲利門檻", fmtMoney(state.monthlyThreshold)],
       ["匯率設定", "USD/TWD=" + state.usdToTwd + "　JPY/TWD=" + state.jpyToTwd],
       ["上架總金額（庫存×售價，已換算台幣）", fmtMoney(calc.totals.listingTotal)],
-      ["自訂上架金額上限", state.capEnabled ? fmtMoney(state.capAmount) : "未啟用"],
-      ["總庫存成本（庫存×成本，台幣）", fmtMoney(calc.totals.costTotal)]
+      ["自訂上架金額上限", state.capEnabled ? fmtMoney(state.capAmount) : "未啟用"]
     ]));
     children.push(new docx.Paragraph({text: "", spacing: {after: 200}}));
 
