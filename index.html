@@ -250,7 +250,7 @@ footer .disclaimer a{color:#7FD1B9;}
 <section class="alt">
   <div class="wrap">
     <h2 class="section-title">全域設定</h2>
-    <p class="section-lead">公司每週／每月最低獲利門檻＝固定支出（房租、人事、倉儲等）需要多少淨利才打平；上架總金額上限為選填的自訂庫存投入金額警戒線，非 Amazon 官方硬性規定。商品「建議售價」以美金／日幣輸入（Amazon 上架幣別），下方兩個匯率用來換算成台幣，跟門檻／上限比對。</p>
+    <p class="section-lead">公司每週／每月最低獲利門檻＝固定支出（房租、人事、倉儲等）需要多少淨利才打平；上架總金額上限為選填的自訂庫存投入金額警戒線，非 Amazon 官方硬性規定。商品「建議售價」以美金／日幣輸入（Amazon 上架幣別），下方兩個匯率用來換算成台幣，跟門檻／上限比對。「毛利」＝售價(NT$)×銷量後已先扣掉 Amazon 分類抽成；「淨利係數」則是毛利再打的一個折扣，用來概括抽成以外的其他營運費用（廣告、退貨、倉儲、人事等未逐項列出的支出），毛利 × 淨利係數 才是最終拿去跟門檻比對的淨利。</p>
     <div class="global-grid">
       <div class="field">
         <label for="weeklyThreshold">公司每週最低獲利門檻（NT$）</label>
@@ -272,6 +272,10 @@ footer .disclaimer a{color:#7FD1B9;}
         <label for="jpyToTwd">日圓兌台幣匯率</label>
         <input type="number" id="jpyToTwd" min="0.01" step="0.005">
       </div>
+      <div class="field">
+        <label for="netCoefficient">淨利係數（%，毛利 × 此比例＝淨利）</label>
+        <input type="number" id="netCoefficient" min="0" max="100" step="1">
+      </div>
       <div class="field cap-field">
         <label><input type="checkbox" id="capEnabled"> 設定平台上架總金額上限</label>
         <input type="number" id="capAmount" min="0" step="1000" placeholder="未啟用時留空即可">
@@ -286,7 +290,7 @@ footer .disclaimer a{color:#7FD1B9;}
       <h2 class="section-title">分類與抽成設定</h2>
       <button class="btn-secondary" id="addCategoryBtn" type="button">＋ 新增分類</button>
     </div>
-    <p class="section-lead">抽成％會套用在下方每項商品自動算出的「毛利（建議售價(NT$) × 銷量）」上，算出 Amazon 抽成後的淨利（毛利 ×（1－抽成%））。</p>
+    <p class="section-lead">抽成％會套用在下方每項商品的營收（建議售價(NT$) × 銷量）上，算出已扣抽成的「毛利」（營收 ×（1－抽成%））；毛利再乘上全域設定的「淨利係數」才是最終的「淨利」。</p>
     <div class="table-scroll">
       <table class="cat-table" id="categoryTable">
         <thead><tr><th style="min-width:160px;">分類名稱</th><th style="min-width:120px;">Amazon 抽成 %</th><th>商品數</th><th></th></tr></thead>
@@ -307,7 +311,7 @@ footer .disclaimer a{color:#7FD1B9;}
         <input type="file" id="productFileInput" accept=".csv,.xlsx,.xls" style="display:none;">
       </span>
     </div>
-    <p class="section-lead">「建議售價」與「建議售價(NT$)」只要填一個就好：填美金／日幣的「建議售價」會自動依匯率換算出「建議售價(NT$)」；也可以跳過「建議售價」，直接在「建議售價(NT$)」填你已經知道的台幣金額。毛利（週／月）不用手動輸入，會自動以「建議售價(NT$) × 銷量」即時算出。上傳 CSV／Excel 會依欄位標題自動對應並<strong>取代</strong>目前的商品清單（分類名稱會自動比對或新增）；下載會輸出目前畫面上的商品清單，方便離線編輯後再匯入。</p>
+    <p class="section-lead">「建議售價」與「建議售價(NT$)」只要填一個就好：填美金／日幣的「建議售價」會自動依匯率換算出「建議售價(NT$)」；也可以跳過「建議售價」，直接在「建議售價(NT$)」填你已經知道的台幣金額。毛利（週／月）不用手動輸入，會自動以「建議售價(NT$) × 銷量 ×（1－該分類抽成%）」即時算出（已扣掉 Amazon 抽成）。上傳 CSV／Excel 會依欄位標題自動對應並<strong>取代</strong>目前的商品清單（分類名稱會自動比對或新增）；下載會輸出目前畫面上的商品清單，方便離線編輯後再匯入。</p>
     <div class="table-scroll">
       <table class="prod-table" id="productTable">
         <thead><tr>
@@ -522,7 +526,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
   function defaultState(){
     return {
       weeklyThreshold:0, monthlyThreshold:0, restockLeadDays:14, capEnabled:false, capAmount:0,
-      usdToTwd:31.5, jpyToTwd:0.21,
+      usdToTwd:31.5, jpyToTwd:0.21, netCoefficient:100,
       categories:[], products:[], _catSeq:0, _prodSeq:0
     };
   }
@@ -545,6 +549,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       state = saved;
       if(state.usdToTwd == null) state.usdToTwd = 31.5;
       if(state.jpyToTwd == null) state.jpyToTwd = 0.21;
+      if(state.netCoefficient == null) state.netCoefficient = 100;
       try{ activePresetId = localStorage.getItem(PRESET_KEY) || null; }catch(e){ activePresetId = null; }
     } else {
       state = defaultState();
@@ -591,6 +596,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     state.capAmount = ov.capAmount;
     state.usdToTwd = ov.usdToTwd != null ? ov.usdToTwd : 31.5;
     state.jpyToTwd = ov.jpyToTwd != null ? ov.jpyToTwd : 0.21;
+    state.netCoefficient = ov.netCoefficient != null ? ov.netCoefficient : 100;
     state.categories = deepClone(ov.categories);
     state.products = deepClone(ov.products);
     state.products.forEach(recomputePriceTwd);
@@ -615,6 +621,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     $("capAmount").disabled = !state.capEnabled;
     $("usdToTwd").value = state.usdToTwd;
     $("jpyToTwd").value = state.jpyToTwd;
+    $("netCoefficient").value = state.netCoefficient;
   }
   function bindGlobalInputs(){
     $("weeklyThreshold").addEventListener("input", function(){ state.weeklyThreshold = parseFloat(this.value)||0; clearActivePreset(); persistState(); recalcAll(); });
@@ -624,6 +631,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     $("capAmount").addEventListener("input", function(){ state.capAmount = parseFloat(this.value)||0; clearActivePreset(); persistState(); recalcAll(); });
     $("usdToTwd").addEventListener("input", function(){ state.usdToTwd = parseFloat(this.value)||0; state.products.forEach(recomputePriceTwd); clearActivePreset(); persistState(); renderProducts(); recalcAll(); });
     $("jpyToTwd").addEventListener("input", function(){ state.jpyToTwd = parseFloat(this.value)||0; state.products.forEach(recomputePriceTwd); clearActivePreset(); persistState(); renderProducts(); recalcAll(); });
+    $("netCoefficient").addEventListener("input", function(){ state.netCoefficient = parseFloat(this.value)||0; clearActivePreset(); persistState(); recalcAll(); });
   }
 
   /* ---------- Category CRUD & render ---------- */
@@ -829,10 +837,12 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       var feePct = cat ? cat.feePct : 0;
       var priceCurrency = p.priceCurrency === "JPY" ? "JPY" : "USD";
       var priceTWD = (p.priceTWD != null && p.priceTWD > 0) ? p.priceTWD : null;
-      var weeklyProfit = priceTWD != null ? priceTWD * p.weeklySales : 0;
-      var monthlyProfit = priceTWD != null ? priceTWD * p.monthlySales : 0;
-      var weeklyNet = weeklyProfit * (1 - feePct/100);
-      var monthlyNet = monthlyProfit * (1 - feePct/100);
+      var weeklyRevenue = priceTWD != null ? priceTWD * p.weeklySales : 0;
+      var monthlyRevenue = priceTWD != null ? priceTWD * p.monthlySales : 0;
+      var weeklyProfit = weeklyRevenue * (1 - feePct/100);
+      var monthlyProfit = monthlyRevenue * (1 - feePct/100);
+      var weeklyNet = weeklyProfit * (state.netCoefficient/100);
+      var monthlyNet = monthlyProfit * (state.netCoefficient/100);
       var dailySales = p.weeklySales / 7;
       var daysLeft = dailySales > 0 ? p.stock / dailySales : null;
       var restockLevel = "normal";
@@ -905,9 +915,11 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     var mState = balanceState(calc.totals.monthlyNet, state.monthlyThreshold);
     var wLabel = wState === "na" ? "尚未設定門檻" : (wState === "good" ? "獲利" : wState === "warn" ? "打平臨界" : "虧損");
     var mLabel = mState === "na" ? "尚未設定門檻" : (mState === "good" ? "獲利" : mState === "warn" ? "打平臨界" : "虧損");
-    card("總週淨利（抽成後）", fmtMoney(calc.totals.weeklyNet),
+    card("總週毛利（已扣抽成）", fmtMoney(calc.totals.weeklyGross), "淨利係數 " + state.netCoefficient + "%", "na");
+    card("總月毛利（已扣抽成）", fmtMoney(calc.totals.monthlyGross), "淨利係數 " + state.netCoefficient + "%", "na");
+    card("總週淨利（毛利×淨利係數）", fmtMoney(calc.totals.weeklyNet),
       '門檻 ' + fmtMoney(state.weeklyThreshold) + '　<span class="kpi-badge state-' + wState + '">' + wLabel + '</span>', wState);
-    card("總月淨利（抽成後）", fmtMoney(calc.totals.monthlyNet),
+    card("總月淨利（毛利×淨利係數）", fmtMoney(calc.totals.monthlyNet),
       '門檻 ' + fmtMoney(state.monthlyThreshold) + '　<span class="kpi-badge state-' + mState + '">' + mLabel + '</span>', mState);
 
     var capState = "na", capSub = "尚未啟用上限";
@@ -1013,14 +1025,20 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
   }
 
   function syncComputedCells(){
+    var catMap = {};
+    state.categories.forEach(function(c){ catMap[c.id] = c; });
     document.querySelectorAll('#productTbody tr[data-id]').forEach(function(tr){
       var p = state.products.filter(function(x){ return x.id === tr.dataset.id; })[0];
       if(!p) return;
+      var cat = catMap[p.categoryId];
+      var feePct = cat ? cat.feePct : 0;
       var twd = (p.priceTWD != null && p.priceTWD > 0) ? p.priceTWD : null;
       var wCell = tr.querySelector('[data-role="weeklyProfit"]');
       var mCell = tr.querySelector('[data-role="monthlyProfit"]');
-      if(wCell) wCell.textContent = fmtInt(twd != null ? twd * p.weeklySales : 0);
-      if(mCell) mCell.textContent = fmtInt(twd != null ? twd * p.monthlySales : 0);
+      var wp = (twd != null ? twd * p.weeklySales : 0) * (1 - feePct/100);
+      var mp = (twd != null ? twd * p.monthlySales : 0) * (1 - feePct/100);
+      if(wCell) wCell.textContent = fmtInt(wp);
+      if(mCell) mCell.textContent = fmtInt(mp);
     });
   }
   function recalcAll(){
@@ -1167,7 +1185,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     lines.push("你是一位熟悉 Amazon 跨境電商商品組合管理與賣場陳列規劃的顧問。以下是一個商品組合收支平衡試算模型的目前資料，請用繁體中文寫一段診斷（約150-220字）加上3-5條具體可執行的建議，語氣專業直接，不要空泛的理論。");
     var wState = balanceState(calc.totals.weeklyNet, state.weeklyThreshold);
     var mState = balanceState(calc.totals.monthlyNet, state.monthlyThreshold);
-    lines.push("整體收支：週淨利（抽成後）" + fmtMoney(calc.totals.weeklyNet) + "，週門檻 " + fmtMoney(state.weeklyThreshold) + "（" + (wState==="na"?"未設定":wState==="good"?"達標":wState==="warn"?"打平臨界":"未達標") + "）；月淨利 " + fmtMoney(calc.totals.monthlyNet) + "，月門檻 " + fmtMoney(state.monthlyThreshold) + "（" + (mState==="na"?"未設定":mState==="good"?"達標":mState==="warn"?"打平臨界":"未達標") + "）。");
+    lines.push("整體收支：週毛利（已扣Amazon抽成）" + fmtMoney(calc.totals.weeklyGross) + "，週淨利（毛利×淨利係數" + state.netCoefficient + "%）" + fmtMoney(calc.totals.weeklyNet) + "，週門檻 " + fmtMoney(state.weeklyThreshold) + "（" + (wState==="na"?"未設定":wState==="good"?"達標":wState==="warn"?"打平臨界":"未達標") + "）；月毛利 " + fmtMoney(calc.totals.monthlyGross) + "，月淨利 " + fmtMoney(calc.totals.monthlyNet) + "，月門檻 " + fmtMoney(state.monthlyThreshold) + "（" + (mState==="na"?"未設定":mState==="good"?"達標":mState==="warn"?"打平臨界":"未達標") + "）。");
     lines.push("匯率設定：USD/TWD=" + state.usdToTwd + "，JPY/TWD=" + state.jpyToTwd + "；商品售價以此換算成台幣後才拿去跟門檻／上限比對。");
     if(state.capEnabled && state.capAmount > 0){
       lines.push("上架總金額（庫存×售價，已換算台幣）" + fmtMoney(calc.totals.listingTotal) + "，自訂上限 " + fmtMoney(state.capAmount) + "（" + (calc.totals.listingTotal > state.capAmount ? "已超過" : "未超過") + "）。");
@@ -1274,9 +1292,12 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     var wState = balanceState(calc.totals.weeklyNet, state.weeklyThreshold);
     var mState = balanceState(calc.totals.monthlyNet, state.monthlyThreshold);
     var overviewRows = [
-      ["總週淨利（抽成後）", fmtMoney(calc.totals.weeklyNet)],
+      ["總週毛利（已扣Amazon抽成）", fmtMoney(calc.totals.weeklyGross)],
+      ["淨利係數", state.netCoefficient + "%"],
+      ["總週淨利（毛利×淨利係數）", fmtMoney(calc.totals.weeklyNet)],
       ["每週最低獲利門檻", fmtMoney(state.weeklyThreshold)],
-      ["總月淨利（抽成後）", fmtMoney(calc.totals.monthlyNet)],
+      ["總月毛利（已扣Amazon抽成）", fmtMoney(calc.totals.monthlyGross)],
+      ["總月淨利（毛利×淨利係數）", fmtMoney(calc.totals.monthlyNet)],
       ["每月最低獲利門檻", fmtMoney(state.monthlyThreshold)],
       ["匯率設定", "USD/TWD=" + state.usdToTwd + "　JPY/TWD=" + state.jpyToTwd],
       ["上架總金額（庫存×售價，已換算台幣）", fmtMoney(calc.totals.listingTotal)],
@@ -1476,14 +1497,16 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     return s;
   }
   function downloadProductsCsv(){
-    var header = ["品名", "分類", "建議售價", "售價幣別", "建議售價(NT$)", "庫存數量", "週銷量", "月銷量", "週毛利(自動)", "月毛利(自動)"];
+    var header = ["品名", "分類", "建議售價", "售價幣別", "建議售價(NT$)", "庫存數量", "週銷量", "月銷量", "週毛利(自動,已扣抽成)", "月毛利(自動,已扣抽成)"];
     var catMap = {};
-    state.categories.forEach(function(c){ catMap[c.id] = c.name; });
+    var catFeeMap = {};
+    state.categories.forEach(function(c){ catMap[c.id] = c.name; catFeeMap[c.id] = c.feePct; });
     var lines = [header.map(csvEscape).join(",")];
     state.products.forEach(function(p){
       var twd = (p.priceTWD != null && p.priceTWD > 0) ? p.priceTWD : null;
-      var weeklyProfit = twd != null ? twd * p.weeklySales : 0;
-      var monthlyProfit = twd != null ? twd * p.monthlySales : 0;
+      var feePct = catFeeMap[p.categoryId] || 0;
+      var weeklyProfit = (twd != null ? twd * p.weeklySales : 0) * (1 - feePct/100);
+      var monthlyProfit = (twd != null ? twd * p.monthlySales : 0) * (1 - feePct/100);
       lines.push([
         p.name || "", catMap[p.categoryId] || "", p.price == null ? "" : p.price, p.priceCurrency || "USD",
         p.priceTWD == null ? "" : p.priceTWD, p.stock, p.weeklySales, p.monthlySales, weeklyProfit, monthlyProfit
@@ -1550,9 +1573,12 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
 
     children.push(new docx.Paragraph({text: "整體收支概況", heading: docx.HeadingLevel.HEADING_2}));
     children.push(buildDocxTable(["項目", "數值"], [
-      ["總週淨利（抽成後）", fmtMoney(calc.totals.weeklyNet) + "（" + (wState==="na"?"未設定門檻":wState==="good"?"達標":wState==="warn"?"打平臨界":"未達標") + "）"],
+      ["總週毛利（已扣Amazon抽成）", fmtMoney(calc.totals.weeklyGross)],
+      ["淨利係數", state.netCoefficient + "%"],
+      ["總週淨利（毛利×淨利係數）", fmtMoney(calc.totals.weeklyNet) + "（" + (wState==="na"?"未設定門檻":wState==="good"?"達標":wState==="warn"?"打平臨界":"未達標") + "）"],
       ["每週最低獲利門檻", fmtMoney(state.weeklyThreshold)],
-      ["總月淨利（抽成後）", fmtMoney(calc.totals.monthlyNet) + "（" + (mState==="na"?"未設定門檻":mState==="good"?"達標":mState==="warn"?"打平臨界":"未達標") + "）"],
+      ["總月毛利（已扣Amazon抽成）", fmtMoney(calc.totals.monthlyGross)],
+      ["總月淨利（毛利×淨利係數）", fmtMoney(calc.totals.monthlyNet) + "（" + (mState==="na"?"未設定門檻":mState==="good"?"達標":mState==="warn"?"打平臨界":"未達標") + "）"],
       ["每月最低獲利門檻", fmtMoney(state.monthlyThreshold)],
       ["匯率設定", "USD/TWD=" + state.usdToTwd + "　JPY/TWD=" + state.jpyToTwd],
       ["上架總金額（庫存×售價，已換算台幣）", fmtMoney(calc.totals.listingTotal)],
