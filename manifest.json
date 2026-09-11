@@ -1,0 +1,16 @@
+{
+  "name": "亞馬遜商品組合收支平衡計算機",
+  "short_name": "商品組合收支",
+  "description": "輸入多分類、多商品的庫存與銷售毛利，一次算出全店收支平衡、補貨警示與商品組合陳列角色",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F2E8",
+  "theme_color": "#0F1B18",
+  "lang": "zh-TW",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
