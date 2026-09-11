@@ -423,7 +423,7 @@ footer .disclaimer a{color:#7FD1B9;}
         <div class="ai-fields">
           <div><label for="aiProvider">服務商</label><select id="aiProvider"></select></div>
           <div><label for="aiModel">模型 ID</label><input type="text" id="aiModel" autocomplete="off"></div>
-          <div><label for="aiKey">API 金鑰</label><input type="password" id="aiKey" autocomplete="off" placeholder="只存在你的瀏覽器本機"></div>
+          <div><label for="aiKey">API 金鑰</label><span style="position:relative;display:block;"><input type="password" id="aiKey" autocomplete="off" placeholder="只存在你的瀏覽器本機" style="padding-right:34px;box-sizing:border-box;"><button type="button" onclick="var i=this.previousElementSibling;i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" title="顯示／隱藏金鑰" aria-label="顯示／隱藏金鑰" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;padding:4px 6px;opacity:.65;line-height:1;">👁</button></span></div>
         </div>
       </details>
       <div class="ai-actions">
