@@ -16,7 +16,7 @@
 
 **2026-09-11 使用者中途追加需求**（在原計畫核准後、實作過程中補充）：AI 診斷提示詞裡也要包含「商品的搭配建議」，並提供使用者給的賣場商品結構角色定義（主力／輔助／附屬／聯想／刺激商品）。因此新增「商品組合陳列角色」整個區塊，見下方「商品角色分類」一節。
 
-不套用序號授權，公開免費工具（使用者明確選擇），無可攜式桌面版 exe。是否推公開 GitHub repo／GitHub Pages 尚待使用者本機驗證後另外確認（依 [[pref-confirm-before-deploy-new-experimental-tool]] 記憶慣例，新實驗性工具不自動上線）。
+最初不套用序號授權、公開免費工具（使用者明確選擇），**2026-09-11 後來改主意，要求比照 amazon-cost-calculator 補上序號授權**（見下方「序號授權」一節），無可攜式桌面版 exe。是否推公開 GitHub repo／GitHub Pages 尚待使用者本機驗證後另外確認（依 [[pref-confirm-before-deploy-new-experimental-tool]] 記憶慣例，新實驗性工具不自動上線）。
 
 **2026-09-11 同日第二輪追加需求**（工具已上線一版之後，使用者再提出四項）：
 1. 「再增加一個成本欄位」→ 每項商品新增「商品成本」（選填，固定以台幣輸入，代表國內進貨成本，與售價幣別無關）。
@@ -104,12 +104,21 @@
 - **PWA** — `manifest.json`＋`service-worker.js`（network-first＋同源快取備援）＋`icons/`（PIL 產生，深色森林墨綠底＋白色天秤圖案，象徵「收支平衡」，192/512/maskable-512/apple-touch-icon 四種尺寸，產生腳本 `_gen_icons.py` 用完即刪未進 repo）；安裝按鈕 `#installBtn`＋`#toast`，安裝腳本逐字沿用 [[pwa-install-rollout]] 記載已修好的版本。
 - **訪客計數器** — `visitor-badge.laobi.icu`，`page_id=m255525.amazonlistingmixcalculator`，放 footer。
 
+## 序號授權（鎖定整個工具，12 個月，2026-09-11 新增）
+
+使用者要求「請參考 Amazon 成本分析計算機」加上序號登入，並給了同一份共用試算表網址。逐字比照 `資料儀表板/amazon-cost-calculator` 已驗證的實作（套用 `member-license-gate` skill，但沿用這個工作區「鎖整個工具的全螢幕遮罩」變體，不是該 skill 預設骨架裡「只鎖單一功能的 license-bar」樣式）：`#licenseGate` 全螢幕遮罩（`position:fixed;inset:0`）預設鎖定，驗證通過才加 `.hidden`；載入時對後端即時重驗一次，之後每 20 分鐘背景重驗一次（`RECHECK_MS`）；徽章 `#licenseBadge` 放在 `.hero-utility`（本工具沒有持續顯示的 topbar，跟 amazon-cost-calculator 一樣改用 hero 區塊右上角的工具列）。CSS 配色改用本工具自己的 `--brand`（teal）而非 amazon-cost-calculator 的橘色，其餘（`gate-box`／`gate-row`／`gate-status` 三態色／`.license-badge.warn`）逐字沿用。`localStorage` key：`amazonListingMixSerial`。
+
+- **綁定的 Google Sheet**：使用者指定沿用 <https://docs.google.com/spreadsheets/d/1pqGlCvUstowBzZh7J4xEa0jy3KoK4UeHUiyMTzcSGo4/edit>（跟 `product-title-generator`／`amazon-listing-generator`／`amazon-cost-calculator` 共用同一份）。`Code.gs`（`.gas-deploy/Code.gs`，不進版控）固定操作獨立分頁「AmazonListingMix序號」（`SHEET_NAME` 常數），不掃描其他分頁；分頁不存在時 `getLicenseSheet_()` 會自動 `insertSheet()` 並寫入表頭（`序號`／`開始日期`／`結束日期`）。`VALID_AMOUNT=12`（月）。
+- **部署方式**：這次**沒有卡在複製貼上壞掉**（跟 sbir-gen-s/icap_s/line-cs-bot-s 等早期案例不同），直接一次用 clasp 完成——`clasp create --parentId 1pqGlCvUstowBzZh7J4xEa0jy3KoK4UeHUiyMTzcSGo4`（**不加 `--type`**，這樣才是綁定在該試算表上的 container-bound script，不是獨立 standalone script；第一次手滑打了 `--type standalone` 建出一個沒綁定的孤兒腳本，已捨棄不用，改用正確參數重建）→ `clasp push --force` 推上 `Code.gs`/`appsscript.json` → `clasp deploy` 直接用 API 建立部署，全程在 `.gas-deploy/`（已加入 `.gitignore`）內操作，沒有經過網頁編輯器複製貼上這一步。已部署：`LICENSE_CHECK_URL = https://script.google.com/macros/s/AKfycbwjlvCsQIXEPd9hgPkY9wZuI-kB3q7t6-1t4_pa7pWtfqoTZ7V2dFwR3ZzpnSlETeGGpA/exec`。
+- **⚠️ 尚待使用者完成一次性 OAuth 授權**（跟 amazon-cost-calculator 當時一樣的坑）：`clasp deploy` 本身只是透過 API 建立部署記錄，不會自動觸發那個「Google 尚未驗證這個應用程式」的同意畫面——只有真人用瀏覽器實際打開 exec 網址才會跳出來，且這個瀏覽器互動步驟不能由 Claude 代勞（`google-apps-script` skill 明載的限制）。已用 `curl -sL` 對 exec 網址測過，回應是 Google 的同意頁 HTML（不是我們的 JSON），確認同意流程還沒跑過；已請使用者親自到瀏覽器開一次網址、點過「進階→前往（不安全）→允許」。使用者確認完成後才能實際端對端測試序號驗證。
+
 ## localStorage
 
 - `amazonListingMixState` — 全部門檻/上限/分類/商品資料（reload 後還原）。
 - `amazonListingMixApiConfig` — `{provider, model, apiKey, extra}`，只存本機瀏覽器。
 - `amazonListingMixActivePreset` — 目前套用中的範例 id；手動編輯任一欄位會清空（`clearActivePreset()`）。
 - `amazonListingMixCalcMarquee` — 跑馬燈內容快取。
+- `amazonListingMixSerial` — 序號授權閘門存的序號字串。
 
 「重設為範例一」（`resetToPresetOne()`）直接呼叫 `applyPreset(PRESETS[0], true)`，會整批覆寫分類/商品/門檻，不像 `amazon-cost-calculator` 只重設數值滑桿——因為本工具的分類/商品本身是使用者自由增減的清單，沒有獨立於範例之外的「基準假設」概念。AI 設定不受影響。
 
