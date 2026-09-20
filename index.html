@@ -319,6 +319,20 @@ footer .disclaimer a{color:#7FD1B9;}
 
 <section>
   <div class="wrap">
+    <h2 class="section-title">身分資料（選填，練習證明用）</h2>
+    <p class="section-lead">填寫後可在下方按「🎓 下載練習證明」，產生一張含身分資料的 PNG 圖片存證；只存在你自己瀏覽器的 localStorage，不會上傳到任何伺服器，非課程練習用途可不填。</p>
+    <div class="global-grid">
+      <div class="field"><label for="idName">姓名</label><input type="text" id="idName" maxlength="40" placeholder="例如：王小明"></div>
+      <div class="field"><label for="idStudentId">學號</label><input type="text" id="idStudentId" maxlength="30" placeholder="選填"></div>
+      <div class="field"><label for="idDept">系所</label><input type="text" id="idDept" maxlength="40" placeholder="選填"></div>
+      <div class="field"><label for="idGroup">組別</label><input type="text" id="idGroup" maxlength="30" placeholder="選填"></div>
+    </div>
+    <button type="button" class="hero-util-btn" id="certExportBtn" style="margin-top:14px;">🎓 下載練習證明</button>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
     <div class="section-head-row">
       <h2 class="section-title">分類與抽成設定</h2>
       <button class="btn-secondary" id="addCategoryBtn" type="button">＋ 新增分類</button>
@@ -442,7 +456,7 @@ footer .disclaimer a{color:#7FD1B9;}
 <footer>
   <div class="wrap">
     <div class="disclaimer">
-      <strong>使用警語：</strong>本工具僅供商品組合收支平衡的初步試算參考，所有數字皆為依你目前輸入推算的估計值，非正式財務報表或專業意見，不能取代會計師或供應鏈顧問。「平台上架總金額上限」為你自訂的參考門檻，並非 Amazon 官方硬性規則；商品組合陳列角色（主力／輔助／附屬／聯想／刺激商品）為簡化規則式分類，僅供參考；美元／日圓兌台幣匯率為你自行輸入的固定數字，不會自動查詢即時匯率。所有輸入資料與 API 金鑰皆只存在你的瀏覽器本機，不會上傳到任何伺服器；上傳 CSV／Excel 匯入商品清單同樣只在瀏覽器本機解析；填入 API 金鑰並按下「請 AI 診斷」時，你的試算資料會直接送到你選擇的服務商官方 API；「匯出Word」與「上傳CSV／Excel」首次使用會從公開 CDN 載入對應元件。內建範例皆為虛構情境，非真實客戶資料。完整使用說明與創作者資料請見<a href="manual.html">操作手冊</a>。
+      <strong>使用警語：</strong>本工具僅供商品組合收支平衡的初步試算參考，所有數字皆為依你目前輸入推算的估計值，非正式財務報表或專業意見，不能取代會計師或供應鏈顧問。「平台上架總金額上限」為你自訂的參考門檻，並非 Amazon 官方硬性規則；商品組合陳列角色（主力／輔助／附屬／聯想／刺激商品）為簡化規則式分類，僅供參考；美元／日圓兌台幣匯率為你自行輸入的固定數字，不會自動查詢即時匯率。所有輸入資料與 API 金鑰皆只存在你的瀏覽器本機，不會上傳到任何伺服器；「姓名／學號／系所／組別」為選填欄位，僅用於你自行下載的練習證明圖檔，同樣只存在你的瀏覽器本機；上傳 CSV／Excel 匯入商品清單同樣只在瀏覽器本機解析；填入 API 金鑰並按下「請 AI 診斷」時，你的試算資料會直接送到你選擇的服務商官方 API；「匯出Word」與「上傳CSV／Excel」首次使用會從公開 CDN 載入對應元件。內建範例皆為虛構情境，非真實客戶資料。完整使用說明與創作者資料請見<a href="manual.html">操作手冊</a>。
     </div>
     <div class="footer-row">
       <span>製作：Mark Tsai｜<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a></span>
@@ -1683,6 +1697,100 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     applyPreset(PRESETS[0], true);
     showToast("已重設為範例一：居家小家電組合。");
   }
+
+  /* ---------- 身分資料與練習證明（PNG 圖檔，Canvas 繪製） ---------- */
+  var IDENTITY_KEY = "amazonListingMixIdentity";
+  function loadIdentity(){
+    try{ return JSON.parse(localStorage.getItem(IDENTITY_KEY) || "{}"); }catch(e){ return {}; }
+  }
+  function saveIdentity(){
+    var d = { name: $("idName").value, studentId: $("idStudentId").value, dept: $("idDept").value, group: $("idGroup").value };
+    try{ localStorage.setItem(IDENTITY_KEY, JSON.stringify(d)); }catch(e){}
+  }
+  function restoreIdentity(){
+    var d = loadIdentity();
+    $("idName").value = d.name || ""; $("idStudentId").value = d.studentId || "";
+    $("idDept").value = d.dept || ""; $("idGroup").value = d.group || "";
+  }
+  function wrapCanvasText(ctx, text, maxWidth){
+    var lines = [], line = "";
+    for(var i = 0; i < text.length; i++){
+      var test = line + text[i];
+      if(ctx.measureText(test).width > maxWidth && line){ lines.push(line); line = text[i]; }
+      else line = test;
+    }
+    if(line) lines.push(line);
+    return lines;
+  }
+  function downloadPracticeCertificate(){
+    var name = $("idName").value.trim(), sid = $("idStudentId").value.trim();
+    var dept = $("idDept").value.trim(), group = $("idGroup").value.trim();
+    var calc = calculate();
+    var d = new Date();
+    var dateStr = d.getFullYear() + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + String(d.getDate()).padStart(2,"0");
+
+    var W = 1000, H = 700;
+    var canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#0F1B18"; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "#1C6E8C"; ctx.lineWidth = 3; ctx.strokeRect(24, 24, W-48, H-48);
+    ctx.strokeStyle = "rgba(28,110,140,0.35)"; ctx.lineWidth = 1; ctx.strokeRect(34, 34, W-68, H-68);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#3FA9CE";
+    ctx.font = "bold 20px \"Microsoft JhengHei\", sans-serif";
+    ctx.fillText("PRACTICE CERTIFICATE", W/2, 90);
+    ctx.fillStyle = "#F5F2E8";
+    ctx.font = "bold 32px \"Microsoft JhengHei\", sans-serif";
+    ctx.fillText("練習證明", W/2, 138);
+    ctx.font = "17px \"Microsoft JhengHei\", sans-serif";
+    ctx.fillStyle = "#C7D3CF";
+    ctx.fillText("亞馬遜商品組合收支平衡計算機", W/2, 170);
+
+    ctx.strokeStyle = "rgba(28,110,140,0.4)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(120, 196); ctx.lineTo(W-120, 196); ctx.stroke();
+
+    var y = 246, lineH = 40;
+    ctx.font = "20px \"Microsoft JhengHei\", sans-serif";
+    function row(label, value){
+      ctx.textAlign = "right"; ctx.fillStyle = "#8AA39B";
+      ctx.fillText(label, W/2 - 16, y);
+      ctx.textAlign = "left"; ctx.fillStyle = "#F5F2E8";
+      ctx.fillText(value || "（未填寫）", W/2, y);
+      y += lineH;
+    }
+    row("姓名：", name); row("學號：", sid); row("系所：", dept); row("組別：", group);
+
+    y += 14;
+    ctx.textAlign = "center";
+    ctx.font = "16px \"Microsoft JhengHei\", sans-serif";
+    ctx.fillStyle = "#8AA39B";
+    var summary = "已完成試算：週淨利 " + fmtMoney(calc.totals.weeklyNet) + "，月淨利 " + fmtMoney(calc.totals.monthlyNet);
+    wrapCanvasText(ctx, summary, W-200).forEach(function(ln){ ctx.fillText(ln, W/2, y); y += 26; });
+    y += 8;
+    ctx.fillText("產出日期：" + dateStr, W/2, y);
+
+    ctx.font = "12px \"Microsoft JhengHei\", sans-serif";
+    ctx.fillStyle = "#5C6E68";
+    ctx.fillText("本證明由使用者自行下載，僅供課程練習存證使用，非官方發行文件", W/2, H-50);
+    ctx.fillText("亞馬遜商品組合收支平衡計算機 · Mark Tsai", W/2, H-30);
+
+    canvas.toBlob(function(blob){
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      var stamp = d.getFullYear() + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0");
+      a.href = url; a.download = "練習證明_" + (name || "未填寫姓名") + "_" + stamp + ".png";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+  ["idName","idStudentId","idDept","idGroup"].forEach(function(id){
+    $(id).addEventListener("input", saveIdentity);
+  });
+  $("certExportBtn").addEventListener("click", downloadPracticeCertificate);
+  restoreIdentity();
 
   /* ---------- Init ---------- */
   if($("wmImg")) $("wmImg").src = WATERMARK_DATA_URI;
