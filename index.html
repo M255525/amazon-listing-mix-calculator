@@ -70,6 +70,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-bo
 #marqueeBar.show{display:flex;}
 #marqueeTrack{display:inline-block;white-space:nowrap;padding-left:100%;font-size:13px;font-weight:600;color:#7FD1B9;animation:marquee-scroll 30s linear infinite;}
 body.has-marquee{padding-top:30px;}
+#marqueeBar:hover #marqueeTrack{animation-play-state:paused}
 @keyframes marquee-scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 
 /* ---------- Toast ---------- */
