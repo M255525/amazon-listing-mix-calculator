@@ -160,6 +160,17 @@ table input.prod-name{font-family:var(--font-body);min-width:120px;}
 .restock-tag.urgent{background:var(--bad-bg);color:var(--bad);}
 .restock-tag.watch{background:var(--warn-bg);color:var(--warn);}
 .empty-note{color:var(--ink-soft);font-size:.86rem;padding:8px 2px;}
+.verify-box{margin:0 0 18px;border:1px solid var(--line);border-left:5px solid var(--good);border-radius:12px;padding:12px 16px;background:var(--good-bg);}
+.verify-box.state-warn{border-left-color:var(--warn);background:var(--warn-bg);}
+.verify-box.state-bad{border-left-color:var(--bad);background:var(--bad-bg);}
+.verify-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;justify-content:space-between;}
+.verify-title{font-weight:700;font-size:.95rem;}
+.verify-meta{font-size:.76rem;color:var(--ink-soft);}
+.verify-list{margin:8px 0 0;padding-left:20px;font-size:.84rem;line-height:1.6;}
+.verify-list li.v-bad{color:var(--bad);font-weight:700;}
+.verify-list li.v-warn{color:#7A5A12;}
+.verify-btn{font-size:.78rem;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink);}
+.verify-btn:hover{border-color:var(--brand);color:var(--brand);}
 
 /* ---------- Category bars ---------- */
 .bar-chart{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
@@ -359,7 +370,7 @@ footer .disclaimer a{color:#7FD1B9;}
         <input type="file" id="productFileInput" accept=".csv,.xlsx,.xls" style="display:none;">
       </span>
     </div>
-    <p class="section-lead">「建議售價」與「建議售價(NT$)」只要填一個就好：填美金／日幣的「建議售價」會自動依匯率換算出「建議售價(NT$)」；也可以跳過「建議售價」，直接在「建議售價(NT$)」填你已經知道的台幣金額。毛利（週／月）不用手動輸入，會自動以「建議售價(NT$) × 銷量 ×（1－該分類抽成%）」即時算出（已扣掉 Amazon 抽成）。上傳 CSV／Excel 會依欄位標題自動對應並<strong>取代</strong>目前的商品清單（分類名稱會自動比對或新增）；下載會輸出目前畫面上的商品清單，方便離線編輯後再匯入。</p>
+    <p class="section-lead">「建議售價」與「建議售價(NT$)」只要填一個就好：填美金／日幣的「建議售價」會自動依匯率換算出「建議售價(NT$)」；也可以跳過「建議售價」，直接在「建議售價(NT$)」填你已經知道的台幣金額。毛利（週／月）不用手動輸入，會自動以「建議售價(NT$) × 銷量 ×（1－該分類抽成%）」即時算出（已扣掉 Amazon 抽成）。填入「週銷量」會自動帶出「月銷量」（週銷量 × 30 ÷ 7，四捨五入），實際月銷量不同時可再手動修改。上傳 CSV／Excel 會依欄位標題自動對應並<strong>取代</strong>目前的商品清單（分類名稱會自動比對或新增）；下載會輸出目前畫面上的商品清單，方便離線編輯後再匯入。</p>
     <div class="table-scroll">
       <table class="prod-table" id="productTable">
         <thead><tr>
@@ -383,6 +394,13 @@ footer .disclaimer a{color:#7FD1B9;}
 <section id="resultsSection">
   <div class="wrap">
     <h2 class="section-title">結果儀表板</h2>
+    <div class="verify-box" id="verifyBox" role="status" aria-live="polite">
+      <div class="verify-head">
+        <span class="verify-title" id="verifyTitle">驗算中…</span>
+        <span><span class="verify-meta" id="verifyMeta"></span> <button type="button" class="verify-btn" id="verifyBtn">🔁 重新計算並驗算</button></span>
+      </div>
+      <ul class="verify-list" id="verifyList"></ul>
+    </div>
     <div class="kpi-grid" id="kpiGrid"></div>
     <div class="results-columns">
       <div class="panel-box">
@@ -587,6 +605,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       p.priceTWD = Math.round(p.price * rateForCurrency(p.priceCurrency || "USD"));
     }
   }
+  function weeklyToMonthly(w){ return Math.round(w * 30 / 7); }
   function nextCatId(){ state._catSeq = (state._catSeq||0)+1; return "cat_u"+state._catSeq; }
   function nextProdId(){ state._prodSeq = (state._prodSeq||0)+1; return "p_u"+state._prodSeq; }
 
@@ -679,7 +698,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     $("capAmount").addEventListener("input", function(){ state.capAmount = parseFloat(this.value)||0; clearActivePreset(); persistState(); recalcAll(); });
     $("usdToTwd").addEventListener("input", function(){ state.usdToTwd = parseFloat(this.value)||0; state.products.forEach(recomputePriceTwd); clearActivePreset(); persistState(); renderProducts(); recalcAll(); });
     $("jpyToTwd").addEventListener("input", function(){ state.jpyToTwd = parseFloat(this.value)||0; state.products.forEach(recomputePriceTwd); clearActivePreset(); persistState(); renderProducts(); recalcAll(); });
-    $("netCoefficient").addEventListener("input", function(){ state.netCoefficient = parseFloat(this.value)||0; clearActivePreset(); persistState(); recalcAll(); });
+    $("netCoefficient").addEventListener("input", function(){ state.netCoefficient = Math.max(parseFloat(this.value)||0, 0); clearActivePreset(); persistState(); recalcAll(); });
   }
 
   /* ---------- Category CRUD & render ---------- */
@@ -697,6 +716,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     state.categories = state.categories.filter(function(c){ return c.id !== id; });
     clearActivePreset();
     renderCategories();
+    renderProducts(); // 商品列的分類下拉選單也要拿掉已刪除的分類，否則之後選到它會變成「未分類、抽成0%」
     persistState();
     recalcAll();
   }
@@ -729,7 +749,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       if(!cat) return;
       var field = e.target.dataset.field;
       if(field === "name"){ cat.name = e.target.value; }
-      else if(field === "feePct"){ cat.feePct = parseFloat(e.target.value)||0; }
+      else if(field === "feePct"){ cat.feePct = Math.min(Math.max(parseFloat(e.target.value)||0, 0), 100); }
       clearActivePreset();
       persistState();
       if(field === "feePct") recalcAll(); else { renderProducts(); recalcAll(); }
@@ -746,6 +766,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
   function addProduct(){
     if(!state.categories.length){ showToast("請先新增至少一個分類。"); return; }
     state.products.push({id:nextProdId(), name:"", categoryId:state.categories[0].id, price:null, priceCurrency:"USD", priceTWD:null, stock:0, weeklySales:0, monthlySales:0});
+    verifyNote = "已新增第 " + state.products.length + " 項商品並重新計算";
     clearActivePreset();
     renderProducts();
     renderCategories();
@@ -754,6 +775,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
   }
   function removeProduct(id){
     state.products = state.products.filter(function(p){ return p.id !== id; });
+    verifyNote = "已刪除商品並重新計算";
     clearActivePreset();
     renderProducts();
     renderCategories();
@@ -802,13 +824,21 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       if(field === "name"){ p.name = e.target.value; }
       else if(field === "price"){
         var v = e.target.value.trim();
-        p.price = v === "" ? null : (parseFloat(v)||0);
+        p.price = v === "" ? null : Math.max(parseFloat(v)||0, 0);
         recomputePriceTwd(p);
         var twdInput = tr.querySelector('input[data-field="priceTWD"]');
         if(twdInput) twdInput.value = p.priceTWD == null ? "" : p.priceTWD;
       }
-      else if(field === "priceTWD"){ var v2 = e.target.value.trim(); p.priceTWD = v2 === "" ? null : (parseFloat(v2)||0); }
-      else if(field){ p[field] = parseFloat(e.target.value)||0; }
+      else if(field === "priceTWD"){ var v2 = e.target.value.trim(); p.priceTWD = v2 === "" ? null : Math.max(parseFloat(v2)||0, 0); }
+      else if(field){
+        p[field] = Math.max(parseFloat(e.target.value)||0, 0); // 庫存/銷量不允許負數，避免可撐天數與毛利出現負值
+        if(field === "weeklySales"){
+          // 填週銷量自動推算月銷量（一個月以 30 天計＝週銷量 × 30/7），之後仍可手動改月銷量
+          p.monthlySales = weeklyToMonthly(p.weeklySales);
+          var mInput = tr.querySelector('input[data-field="monthlySales"]');
+          if(mInput) mInput.value = p.monthlySales;
+        }
+      }
       clearActivePreset();
       persistState();
       recalcAll();
@@ -1089,6 +1119,109 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       if(mCell) mCell.textContent = fmtInt(mp);
     });
   }
+  /* ---------- 計算結果自動驗算 ----------
+     每次 recalcAll() 之後執行：用一條「不經過 calculate()」的獨立算法從原始 state 重算一次，
+     再跟 calculate() 的結果、以及畫面上實際顯示的數字（KPI 卡、商品列毛利、補貨、角色表）逐一比對。
+     新增／刪除／匯入商品都會走 recalcAll()，所以每次加商品後都會自動重新驗算。 */
+  var verifyNote = "";
+  function independentTotals(){
+    var fee = {};
+    state.categories.forEach(function(c){ fee[c.id] = c.feePct; });
+    var coef = state.netCoefficient / 100;
+    var t = {weeklyGross:0, monthlyGross:0, weeklyNet:0, monthlyNet:0, listingTotal:0, urgent:0, watch:0, rows:[]};
+    for(var i = 0; i < state.products.length; i++){
+      var p = state.products[i];
+      var keep = 1 - (fee.hasOwnProperty(p.categoryId) ? fee[p.categoryId] : 0) / 100;
+      var twd = p.priceTWD > 0 ? p.priceTWD : 0;
+      var wg = twd * p.weeklySales * keep, mg = twd * p.monthlySales * keep;
+      t.weeklyGross += wg; t.monthlyGross += mg;
+      t.weeklyNet += wg * coef; t.monthlyNet += mg * coef;
+      t.listingTotal += twd * p.stock;
+      if(p.weeklySales > 0){
+        var days = p.stock / (p.weeklySales / 7);
+        if(days < state.restockLeadDays) t.urgent++;
+        else if(days < state.restockLeadDays * 1.5) t.watch++;
+      }
+      t.rows.push({id:p.id, wg:wg, mg:mg});
+    }
+    return t;
+  }
+  function verifyResults(calc){
+    var errors = [], warns = [], checks = 0;
+    function check(ok, msg){ checks++; if(!ok) errors.push(msg); }
+    function near(a, b){ return isFinite(a) && isFinite(b) && Math.abs(a - b) < 0.01; }
+    var ind = independentTotals();
+    var T = calc.totals;
+
+    // 1. 核心計算 vs 獨立重算
+    [["weeklyGross","總週毛利"],["monthlyGross","總月毛利"],["weeklyNet","總週淨利"],["monthlyNet","總月淨利"],["listingTotal","上架總金額"]].forEach(function(k){
+      check(near(T[k[0]], ind[k[0]]), k[1] + " 計算不一致：儀表板 " + fmtMoney(T[k[0]]) + "，獨立驗算 " + fmtMoney(ind[k[0]]));
+    });
+    // 2. 分類彙總加總 = 全部商品總和（抓出分類遺失的商品）
+    var catSumGross = calc.catRollup.reduce(function(s,c){ return s + c.monthlyGross; }, 0);
+    var catSumNet = calc.catRollup.reduce(function(s,c){ return s + c.monthlyNet; }, 0);
+    var catSumCount = calc.catRollup.reduce(function(s,c){ return s + c.count; }, 0);
+    check(near(catSumGross, T.monthlyGross) && near(catSumNet, T.monthlyNet) && catSumCount === state.products.length,
+      "分類別彙總加總（" + catSumCount + " 項、月淨利 " + fmtMoney(catSumNet) + "）與全部商品總和（" + state.products.length + " 項、" + fmtMoney(T.monthlyNet) + "）不一致");
+    // 3. 每項商品的分類必須存在
+    var catIds = {};
+    state.categories.forEach(function(c){ catIds[c.id] = true; });
+    var orphan = state.products.filter(function(p){ return !catIds[p.categoryId]; });
+    check(!orphan.length, orphan.length + " 項商品的所屬分類已不存在（抽成會被當成 0%）：" + orphan.map(function(p){ return p.name || "(未命名)"; }).join("、") + "，請重新選擇分類");
+    // 4. 畫面數字 = 計算結果
+    var kpiVals = Array.prototype.map.call(document.querySelectorAll("#kpiGrid .kpi-value"), function(el){ return el.textContent; });
+    var expectKpi = [ind.weeklyGross, ind.monthlyGross, ind.weeklyNet, ind.monthlyNet, ind.listingTotal].map(fmtMoney);
+    check(expectKpi.every(function(v, i){ return kpiVals[i] === v; }), "KPI 卡片顯示的金額與驗算結果不一致");
+    check(kpiVals[5] === ind.urgent + " 緊急／" + ind.watch + " 注意", "補貨警示件數不一致：畫面「" + kpiVals[5] + "」，驗算 " + ind.urgent + " 緊急／" + ind.watch + " 注意");
+    check($("restockTbody").querySelectorAll(".restock-tag").length === ind.urgent + ind.watch, "補貨警示表列數與驗算件數不一致");
+    var rowMismatch = 0;
+    ind.rows.forEach(function(r){
+      var tr = document.querySelector('#productTbody tr[data-id="' + r.id + '"]');
+      if(!tr){ rowMismatch++; return; }
+      var w = tr.querySelector('[data-role="weeklyProfit"]'), m = tr.querySelector('[data-role="monthlyProfit"]');
+      if(!w || !m || w.textContent !== fmtInt(r.wg) || m.textContent !== fmtInt(r.mg)) rowMismatch++;
+    });
+    check(!rowMismatch, rowMismatch + " 項商品列的「毛利（週／月，自動）」顯示值與驗算不一致");
+    check($("roleTbody").querySelectorAll("tr .role-tag").length === state.products.length, "商品組合陳列角色表的商品數與商品清單不一致");
+    var allNums = [T.weeklyGross, T.monthlyGross, T.weeklyNet, T.monthlyNet, T.listingTotal];
+    check(allNums.every(isFinite), "計算結果出現無效數字（NaN／無限大），請檢查輸入欄位");
+
+    // 資料提醒（計算本身正確，但可能是輸入疏漏）
+    var noPrice = state.products.filter(function(p){ return !(p.priceTWD > 0); });
+    if(noPrice.length) warns.push(noPrice.length + " 項商品未填建議售價，毛利以 0 計、不計入上架總金額：" + noPrice.map(function(p){ return p.name || "(未命名)"; }).join("、"));
+    var mismatchSales = state.products.filter(function(p){
+      var w = p.weeklySales, m = p.monthlySales;
+      if(!w && !m) return false;
+      if(!w || !m) return true;
+      var ratio = m / (w * 30 / 7);
+      return ratio < 0.5 || ratio > 2;
+    });
+    if(mismatchSales.length) warns.push(mismatchSales.length + " 項商品的週銷量與月銷量差距過大（月銷量約應為週銷量×4.3）：" + mismatchSales.map(function(p){ return (p.name || "(未命名)") + "（週" + p.weeklySales + "／月" + p.monthlySales + "）"; }).join("、"));
+    var noSalesStock = state.products.filter(function(p){ return !p.weeklySales && p.monthlySales > 0; });
+    if(noSalesStock.length) warns.push(noSalesStock.length + " 項商品週銷量為 0，補貨警示不會計算其可撐天數：" + noSalesStock.map(function(p){ return p.name || "(未命名)"; }).join("、"));
+    var unnamed = state.products.filter(function(p){ return !(p.name && p.name.trim()); }).length;
+    if(unnamed) warns.push(unnamed + " 項商品尚未填寫品名，報告中會顯示為「(未命名商品)」");
+    var seen = {}, dup = {};
+    state.products.forEach(function(p){ var n = (p.name||"").trim(); if(!n) return; if(seen[n]) dup[n] = true; seen[n] = true; });
+    var dupNames = Object.keys(dup);
+    if(dupNames.length) warns.push("品名重複，可能重複輸入同一項商品：" + dupNames.join("、"));
+    var overridden = state.products.filter(function(p){ return p.price > 0 && p.priceTWD !== Math.round(p.price * rateForCurrency(p.priceCurrency || "USD")); });
+    if(overridden.length) warns.push(overridden.length + " 項商品的建議售價(NT$) 與「建議售價×匯率」不一致（手動改過），下次調整匯率時會被重新覆蓋：" + overridden.map(function(p){ return p.name || "(未命名)"; }).join("、"));
+
+    var box = $("verifyBox");
+    box.classList.toggle("state-bad", errors.length > 0);
+    box.classList.toggle("state-warn", !errors.length && warns.length > 0);
+    $("verifyTitle").textContent = errors.length
+      ? "❌ 驗算發現 " + errors.length + " 項錯誤，請先修正再使用結果"
+      : (warns.length ? "✅ 計算結果驗算無誤（另有 " + warns.length + " 項資料提醒）" : "✅ 計算結果驗算無誤");
+    var now = new Date();
+    $("verifyMeta").textContent = (verifyNote ? verifyNote + "・" : "") + "最後驗算 " + now.toLocaleTimeString("zh-TW", {hour12:false}) + "・" + state.products.length + " 項商品・" + (checks - errors.length) + "/" + checks + " 項檢查通過";
+    verifyNote = "";
+    $("verifyList").innerHTML = errors.map(function(m){ return '<li class="v-bad">' + escapeHtml(m) + '</li>'; }).join("") +
+      warns.map(function(m){ return '<li class="v-warn">' + escapeHtml(m) + '</li>'; }).join("");
+    return {ok: !errors.length, errors: errors, warns: warns, checks: checks};
+  }
+
   function recalcAll(){
     var calc = calculate();
     renderKpis(calc);
@@ -1096,6 +1229,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     renderCategorySummary(calc);
     renderRoles(calc);
     syncComputedCells();
+    calc.verify = verifyResults(calc);
     return calc;
   }
 
@@ -1447,8 +1581,8 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
     if(v === null || v === undefined) return null;
     var s = String(v).trim();
     if(s === "") return null;
-    var n = parseFloat(s.replace(/,/g, ""));
-    return isNaN(n) ? null : n;
+    var n = parseFloat(s.replace(/[^0-9.\-]/g, "")); // 去掉千分位逗號與「$」「NT$」「¥」等符號
+    return isNaN(n) ? null : Math.max(n, 0);
   }
   function toNumber(v, fallback){
     var n = toNullableNumber(v);
@@ -1498,10 +1632,12 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
         monthlySales: toNumber(get("monthlySales"), 0)
       };
       if(product.priceTWD == null) recomputePriceTwd(product);
+      if(toNullableNumber(get("monthlySales")) == null && product.weeklySales > 0) product.monthlySales = weeklyToMonthly(product.weeklySales);
       return product;
     });
     createdCategoryCount = state.categories.length - beforeCatCount;
     state.products = newProducts;
+    verifyNote = "已匯入 " + newProducts.length + " 項商品並重新計算";
     clearActivePreset();
     renderCategories();
     renderProducts();
@@ -1557,7 +1693,7 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
       var monthlyProfit = (twd != null ? twd * p.monthlySales : 0) * (1 - feePct/100);
       lines.push([
         p.name || "", catMap[p.categoryId] || "", p.price == null ? "" : p.price, p.priceCurrency || "USD",
-        p.priceTWD == null ? "" : p.priceTWD, p.stock, p.weeklySales, p.monthlySales, weeklyProfit, monthlyProfit
+        p.priceTWD == null ? "" : p.priceTWD, p.stock, p.weeklySales, p.monthlySales, Math.round(weeklyProfit), Math.round(monthlyProfit)
       ].map(csvEscape).join(","));
     });
     var csvText = "﻿" + lines.join("\r\n");
@@ -1809,6 +1945,11 @@ var WATERMARK_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAE7
 
   $("addCategoryBtn").addEventListener("click", addCategory);
   $("addProductBtn").addEventListener("click", addProduct);
+  $("verifyBtn").addEventListener("click", function(){
+    verifyNote = "手動重新計算";
+    var r = recalcAll().verify;
+    showToast(r.ok ? "已重新計算，驗算無誤。" : "驗算發現 " + r.errors.length + " 項錯誤，請查看結果儀表板上方說明。");
+  });
   $("aiDiagnoseBtn").addEventListener("click", runAiDiagnosis);
   $("ruleDiagnoseBtn").addEventListener("click", runRuleDiagnosis);
   $("resetBtn").addEventListener("click", resetToPresetOne);
